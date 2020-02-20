@@ -1,0 +1,208 @@
+Index: src/main/java/com/baby_p2p/baby_p2p/service/UserService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/baby_p2p/baby_p2p/service/UserService.java	(revision 1a2dcc2b74a23c7b34e0978aaee206e502093579)
++++ src/main/java/com/baby_p2p/baby_p2p/service/UserService.java	(date 1581565351485)
+@@ -5,4 +5,6 @@
+ 
+ public interface UserService {
+     public TUserAccount login(String username);
++
++    public boolean register(String id,String username,String password);
+ }
+Index: src/main/java/com/baby_p2p/baby_p2p/dao/UserMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/baby_p2p/baby_p2p/dao/UserMapper.java	(revision 1a2dcc2b74a23c7b34e0978aaee206e502093579)
++++ src/main/java/com/baby_p2p/baby_p2p/dao/UserMapper.java	(date 1581563688154)
+@@ -3,5 +3,12 @@
+ import com.baby_p2p.baby_p2p.entity.TUserAccount;
+ 
+ public interface UserMapper {
++    //用户登录
+     public TUserAccount login(String username);
++    //用户注册
++    public int register1(String id,String username,String password);
++
++    public int register2(String id);
++
++    public int register3(String id);
+ }
+Index: src/main/java/com/baby_p2p/baby_p2p/controller/UserController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/baby_p2p/baby_p2p/controller/UserController.java	(revision 1a2dcc2b74a23c7b34e0978aaee206e502093579)
++++ src/main/java/com/baby_p2p/baby_p2p/controller/UserController.java	(date 1581727776426)
+@@ -2,6 +2,7 @@
+ 
+ import com.baby_p2p.baby_p2p.service.UserServiceImpl;
+ import com.baby_p2p.baby_p2p.entity.TUserAccount;
++import com.baby_p2p.baby_p2p.tools.Item;
+ import com.baby_p2p.baby_p2p.tools.MD5Utils;
+ import org.springframework.stereotype.Controller;
+ import org.springframework.web.bind.annotation.PostMapping;
+@@ -10,8 +11,6 @@
+ import org.springframework.web.bind.annotation.ResponseBody;
+ 
+ import javax.annotation.Resource;
+-import javax.servlet.http.HttpServletRequest;
+-import javax.servlet.http.HttpSession;
+ import java.util.HashMap;
+ import java.util.Map;
+ 
+@@ -24,6 +23,8 @@
+ 
+     private MD5Utils md5Utils;
+ 
++    private Item item;
++
+     @PostMapping("/login")
+     @ResponseBody
+     public Object login(@RequestParam("username")String username, @RequestParam("password")String password){
+@@ -51,6 +52,7 @@
+     @PostMapping("register")
+     @ResponseBody
+     public Object register(@RequestParam("username")String username, @RequestParam("password")String password){
++
+         return null;
+     }
+ }
+Index: src/main/java/com/baby_p2p/baby_p2p/tools/IPUtil.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/baby_p2p/baby_p2p/tools/IPUtil.java	(date 1581559276606)
++++ src/main/java/com/baby_p2p/baby_p2p/tools/IPUtil.java	(date 1581559276606)
+@@ -0,0 +1,43 @@
++package com.baby_p2p.baby_p2p.tools;
++
++import javax.servlet.http.HttpServletRequest;
++
++public class IPUtil {
++    public static String getIpAdrress(HttpServletRequest request) {
++        String ip = null;
++
++        //X-Forwarded-For：Squid 服务代理
++        String ipAddresses = request.getHeader("X-Forwarded-For");
++        String unknown = "unknown";
++        if (ipAddresses == null || ipAddresses.length() == 0 || unknown.equalsIgnoreCase(ipAddresses)) {
++            //Proxy-Client-IP：apache 服务代理
++            ipAddresses = request.getHeader("Proxy-Client-IP");
++        }
++
++        if (ipAddresses == null || ipAddresses.length() == 0 || unknown.equalsIgnoreCase(ipAddresses)) {
++            //WL-Proxy-Client-IP：weblogic 服务代理
++            ipAddresses = request.getHeader("WL-Proxy-Client-IP");
++        }
++
++        if (ipAddresses == null || ipAddresses.length() == 0 || unknown.equalsIgnoreCase(ipAddresses)) {
++            //HTTP_CLIENT_IP：有些代理服务器
++            ipAddresses = request.getHeader("HTTP_CLIENT_IP");
++        }
++
++        if (ipAddresses == null || ipAddresses.length() == 0 || unknown.equalsIgnoreCase(ipAddresses)) {
++            //X-Real-IP：nginx服务代理
++            ipAddresses = request.getHeader("X-Real-IP");
++        }
++
++        //有些网络通过多层代理，那么获取到的ip就会有多个，一般都是通过逗号（,）分割开来，并且第一个ip为客户端的真实IP
++        if (ipAddresses != null && ipAddresses.length() != 0) {
++            ip = ipAddresses.split(",")[0];
++        }
++
++        //还是不能获取到，最后再通过request.getRemoteAddr();获取
++        if (ip == null || ip.length() == 0 || unknown.equalsIgnoreCase(ipAddresses)) {
++            ip = request.getRemoteAddr();
++        }
++        return ip;
++    }
++}
+Index: src/main/java/com/baby_p2p/baby_p2p/tools/Item.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/java/com/baby_p2p/baby_p2p/tools/Item.java	(date 1581558682247)
++++ src/main/java/com/baby_p2p/baby_p2p/tools/Item.java	(date 1581558682247)
+@@ -0,0 +1,48 @@
++package com.baby_p2p.baby_p2p.tools;
++
++import java.util.Random;
++
++public class Item {
++    /**
++     * 生成随机数当作getItemID
++     * n ： 需要的长度
++     * @return
++     */
++    private static String getItemID( int n )
++    {
++        String val = "";
++        Random random = new Random();
++        for ( int i = 0; i < n; i++ )
++        {
++            String str = random.nextInt( 2 ) % 2 == 0 ? "num" : "char";
++            if ( "char".equalsIgnoreCase( str ) )
++            { // 产生字母
++                int nextInt = random.nextInt( 2 ) % 2 == 0 ? 65 : 97;
++                // System.out.println(nextInt + "!!!!"); 1,0,1,1,1,0,0
++                val += (char) ( nextInt + random.nextInt( 26 ) );
++            }
++            else if ( "num".equalsIgnoreCase( str ) )
++            { // 产生数字
++                val += String.valueOf( random.nextInt( 10 ) );
++            }
++        }
++        return val;
++    }
++
++    /**
++     * 生产ItemName随机函数
++     * @param length
++     * @return
++     */
++    private static String getItemName( int length ){
++        String base = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
++        Random random = new Random();
++        StringBuffer sb = new StringBuffer();
++        for ( int i = 0; i < length; i++ )
++        {
++            int number = random.nextInt( base.length() );
++            sb.append( base.charAt( number ) );
++        }
++        return sb.toString();
++    }
++}
+Index: src/main/resources/mapper/UserMapper.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/main/resources/mapper/UserMapper.xml	(revision 1a2dcc2b74a23c7b34e0978aaee206e502093579)
++++ src/main/resources/mapper/UserMapper.xml	(date 1581725986955)
+@@ -6,4 +6,17 @@
+     <select id="login" resultType="com.baby_p2p.baby_p2p.entity.TUserAccount">
+         select * from t_user_account where username = #{username}
+     </select>
++
++    <insert id="register1">
++        insert into  t_user_account() values
++    </insert>
++
++    <insert id="register2">
++
++    </insert>
++
++    <insert id="register3">
++
++    </insert>
++
+ </mapper>
+\ No newline at end of file

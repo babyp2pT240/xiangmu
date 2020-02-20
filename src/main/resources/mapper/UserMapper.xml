@@ -6,4 +6,29 @@
     <select id="login" resultType="com.baby_p2p.baby_p2p.entity.TUserAccount">
         select * from t_user_account where username = #{username}
     </select>
+
+    <insert id="register1">
+        insert into  t_user_account(id,username,password,account_status,account_type,create_time) values(#{id},#{username},#{password},1,1,NOW())
+    </insert>
+
+    <insert id="register2">
+        insert  into t_user_info(account_id,avatar,create_time) values (#{account_id},"nobody.jpg",NOW())
+    </insert>
+
+    <insert id="register3">
+        insert  into t_user_wallet(account_id,create_time) values (#{account_id},NOW())
+    </insert>
+
+    <update id="loginDate">
+        update t_user_account set last_login_time = NOW() where username = #{username}
+    </update>
+
+    <select id="getTUserInfo" resultType="com.baby_p2p.baby_p2p.entity.TUserInfo">
+        select * from t_user_info where account_id = #{account_id}
+    </select>
+
+    <select id="getTUserWallet" resultType="com.baby_p2p.baby_p2p.entity.TUserWallet">
+        select * from t_user_wallet where account_id = #{account_id}
+    </select>
+
 </mapper>
